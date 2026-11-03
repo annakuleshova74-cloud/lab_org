@@ -171,8 +171,59 @@
         select { padding: 12px; font-size: 15px; border-radius: 10px; border: 2px solid var(--lavender); margin: 5px; min-width: 200px; background: white; cursor: pointer; transition: border-color 0.2s; }
         select:focus { outline: none; border-color: var(--lavender-dark); }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 20px 0; font-size: 14px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px var(--shadow); }
-        th, td { border: 1px solid var(--lavender); padding: 12px; text-align: left; vertical-align: middle; }
+        /* НОВЫЙ СТИЛЬ: Обёртка для таблицы с горизонтальной прокруткой */
+        .table-wrapper {
+            position: relative;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        /* Градиентные подсказки по краям (показывают, что есть прокрутка) */
+        .table-wrapper::before,
+        .table-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .table-wrapper::before {
+            left: 0;
+            background: linear-gradient(to right, rgba(255,255,255,0.9), transparent);
+        }
+        .table-wrapper::after {
+            right: 0;
+            background: linear-gradient(to left, rgba(255,255,255,0.9), transparent);
+        }
+        .table-wrapper.has-scroll::before,
+        .table-wrapper.has-scroll::after {
+            opacity: 1;
+        }
+        
+        /* Стилизация скроллбара */
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: var(--lavender);
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, var(--lavender-dark), var(--peach-dark));
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--peach-dark);
+        }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px var(--shadow); min-width: 600px; }
+        th, td { border: 1px solid var(--lavender); padding: 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
         th { background: linear-gradient(135deg, var(--lavender), var(--peach)); font-weight: 600; color: var(--text); }
         tr:nth-child(even) { background: #faf8fc; }
         
@@ -208,6 +259,24 @@
         .select-group { margin: 15px 0; }
         .select-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text); }
         
+        /* Подсказка о прокрутке для мобильных */
+        .scroll-hint {
+            display: none;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 13px;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        .scroll-hint .arrow {
+            display: inline-block;
+            animation: slideArrow 1.5s ease-in-out infinite;
+        }
+        @keyframes slideArrow {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(8px); }
+        }
+        
         @media (max-width: 600px) {
             body { padding: 10px 8px; }
             header { padding: 20px 15px; }
@@ -225,6 +294,7 @@
             .hint-btn { width: 56px; height: 56px; bottom: 15px; right: 15px; }
             .hint-btn .icon { width: 28px; height: 28px; }
             .modal-content { padding: 20px 15px; margin: 10% auto; }
+            .scroll-hint { display: block; }
         }
     </style>
 </head>
@@ -354,17 +424,24 @@
     <div id="level3" class="level">
         <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Уровень 3: «Отчёт лаборанта»</h2>
         <p class="level-description">Заполните таблицу, опираясь на результаты опытов и учебный материал.</p>
-        <table>
-            <tr><th>Вещество</th><th>Реагент</th><th>Признак реакции</th></tr>
-            <tr><td><b>Алкены</b></td><td><select id="r1"><option value="">—</option><option value="br2">Бромная вода / KMnO₄</option><option value="i2">Раствор йода</option><option value="cu">Cu(OH)₂</option></select></td><td><select id="p1"><option value="">—</option><option value="decolor">Обесцвечивание растворов</option><option value="blue">Васильковый цвет</option><option value="red">Красный осадок</option></select></td></tr>
-            <tr><td><b>Многоатомные спирты</b></td><td><select id="r2"><option value="">—</option><option value="cu">Cu(OH)₂</option><option value="br2">Бромная вода</option></select></td><td><select id="p2"><option value="">—</option><option value="blue">Васильковый цвет</option><option value="gas">Выделение газа</option></select></td></tr>
-            <tr><td><b>Альдегиды</b></td><td><select id="r3"><option value="">—</option><option value="cu_hot">Cu(OH)₂ + t°</option><option value="i2">Раствор йода</option></select></td><td><select id="p3"><option value="">—</option><option value="red">Красный осадок</option><option value="blue">Посинение</option></select></td></tr>
-            <tr><td><b>Крахмал</b></td><td><select id="r4"><option value="">—</option><option value="i2">Раствор йода</option><option value="br2">Бромная вода</option></select></td><td><select id="p4"><option value="">—</option><option value="blue_starch">Посинение раствора</option><option value="decolor">Обесцвечивание</option></select></td></tr>
-            <tr><td><b>Глюкоза</b></td><td><select id="r5"><option value="">—</option><option value="cu_hot">Cu(OH)₂ + нагревание</option><option value="br2">Бромная вода</option></select></td><td><select id="p5"><option value="">—</option><option value="glucose_sign">Сначала васильковый цвет, затем красный осадок</option><option value="decolor">Обесцвечивание</option></select></td></tr>
-            <tr><td><b>Карбоновые кислоты</b></td><td><select id="r6"><option value="">—</option><option value="nahco3">NaHCO₃ (сода)</option><option value="i2">Раствор йода</option></select></td><td><select id="p6"><option value="">—</option><option value="gas">Выделение газа</option><option value="blue">Посинение</option></select></td></tr>
-            <tr><td><b>Белки (биуретовая р-ция)</b></td><td><select id="r7"><option value="">—</option><option value="biuret">Щёлочь + CuSO₄</option><option value="hno3">Конц. HNO₃</option></select></td><td><select id="p7"><option value="">—</option><option value="violet">Красно-фиолетовая окраска</option><option value="yellow">Жёлтая окраска</option></select></td></tr>
-            <tr><td><b>Белки (ксантопротеиновая р-ция)</b></td><td><select id="r8"><option value="">—</option><option value="hno3">Конц. HNO₃</option><option value="biuret">Щёлочь + CuSO₄</option></select></td><td><select id="p8"><option value="">—</option><option value="yellow">Жёлтая окраска, свёртывание</option><option value="violet">Красно-фиолетовая окраска</option></select></td></tr>
-        </table>
+        
+        <!-- Подсказка о прокрутке (видна только на мобильных) -->
+        <p class="scroll-hint"><span class="arrow">👉</span> Двигайте таблицу влево-вправо, чтобы увидеть все колонки</p>
+        
+        <!-- Обёртка с горизонтальной прокруткой -->
+        <div class="table-wrapper" id="tableWrapper">
+            <table>
+                <tr><th>Вещество</th><th>Реагент</th><th>Признак реакции</th></tr>
+                <tr><td><b>Алкены</b></td><td><select id="r1"><option value="">—</option><option value="br2">Бромная вода / KMnO₄</option><option value="i2">Раствор йода</option><option value="cu">Cu(OH)₂</option></select></td><td><select id="p1"><option value="">—</option><option value="decolor">Обесцвечивание растворов</option><option value="blue">Васильковый цвет</option><option value="red">Красный осадок</option></select></td></tr>
+                <tr><td><b>Многоатомные спирты</b></td><td><select id="r2"><option value="">—</option><option value="cu">Cu(OH)₂</option><option value="br2">Бромная вода</option></select></td><td><select id="p2"><option value="">—</option><option value="blue">Васильковый цвет</option><option value="gas">Выделение газа</option></select></td></tr>
+                <tr><td><b>Альдегиды</b></td><td><select id="r3"><option value="">—</option><option value="cu_hot">Cu(OH)₂ + t°</option><option value="i2">Раствор йода</option></select></td><td><select id="p3"><option value="">—</option><option value="red">Красный осадок</option><option value="blue">Посинение</option></select></td></tr>
+                <tr><td><b>Крахмал</b></td><td><select id="r4"><option value="">—</option><option value="i2">Раствор йода</option><option value="br2">Бромная вода</option></select></td><td><select id="p4"><option value="">—</option><option value="blue_starch">Посинение раствора</option><option value="decolor">Обесцвечивание</option></select></td></tr>
+                <tr><td><b>Глюкоза</b></td><td><select id="r5"><option value="">—</option><option value="cu_hot">Cu(OH)₂ + нагревание</option><option value="br2">Бромная вода</option></select></td><td><select id="p5"><option value="">—</option><option value="glucose_sign">Сначала васильковый цвет, затем красный осадок</option><option value="decolor">Обесцвечивание</option></select></td></tr>
+                <tr><td><b>Карбоновые кислоты</b></td><td><select id="r6"><option value="">—</option><option value="nahco3">NaHCO₃ (сода)</option><option value="i2">Раствор йода</option></select></td><td><select id="p6"><option value="">—</option><option value="gas">Выделение газа</option><option value="blue">Посинение</option></select></td></tr>
+                <tr><td><b>Белки (биуретовая р-ция)</b></td><td><select id="r7"><option value="">—</option><option value="biuret">Щёлочь + CuSO₄</option><option value="hno3">Конц. HNO₃</option></select></td><td><select id="p7"><option value="">—</option><option value="violet">Красно-фиолетовая окраска</option><option value="yellow">Жёлтая окраска</option></select></td></tr>
+                <tr><td><b>Белки (ксантопротеиновая р-ция)</b></td><td><select id="r8"><option value="">—</option><option value="hno3">Конц. HNO₃</option><option value="biuret">Щёлочь + CuSO₄</option></select></td><td><select id="p8"><option value="">—</option><option value="yellow">Жёлтая окраска, свёртывание</option><option value="violet">Красно-фиолетовая окраска</option></select></td></tr>
+            </table>
+        </div>
         <div class="controls"><button onclick="checkLevel3()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg> Проверить отчёт</button></div>
         <div id="feedback3" class="feedback"></div>
     </div>
@@ -385,16 +462,19 @@
     <div class="modal-content">
         <span class="close" onclick="toggleModal()">&times;</span>
         <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Справочный материал</h2>
-        <table style="font-size: 13px;">
-            <tr><th>Класс</th><th>Реагент</th><th>Признак реакции</th></tr>
-            <tr><td>Алкены</td><td>1) KMnO₄<br>2) Br₂, I₂</td><td>Обесцвечивание растворов</td></tr>
-            <tr><td>Многоатомные спирты</td><td>Cu(OH)₂</td><td>Появление василькового цвета</td></tr>
-            <tr><td>Альдегиды</td><td>1) Реакция серебряного зеркала<br>2) Cu(OH)₂ (свежепригот.)</td><td>1) Налёт серебра<br>2) Красный осадок</td></tr>
-            <tr><td>Глюкоза</td><td>Cu(OH)₂ + нагревание</td><td>Сначала васильковый цвет, затем — красный осадок</td></tr>
-            <tr><td>Крахмал</td><td>Раствор йода</td><td>Посинение раствора</td></tr>
-            <tr><td>Карбоновые кислоты</td><td>NaHCO₃ (сода) *</td><td>Выделение газа (CO₂)</td></tr>
-            <tr><td>Белки</td><td>1) Биуретовая р-ция (щёлочь + CuSO₄)<br>2) Ксантопротеиновая (+ конц. HNO₃)</td><td>1) Красно-фиолетовая окраска<br>2) Жёлтая окраска, свёртывание</td></tr>
-        </table>
+        <!-- Обёртка для таблицы шпаргалки тоже -->
+        <div class="table-wrapper">
+            <table style="font-size: 13px;">
+                <tr><th>Класс</th><th>Реагент</th><th>Признак реакции</th></tr>
+                <tr><td>Алкены</td><td>1) KMnO₄<br>2) Br₂, I₂</td><td>Обесцвечивание растворов</td></tr>
+                <tr><td>Многоатомные спирты</td><td>Cu(OH)₂</td><td>Появление василькового цвета</td></tr>
+                <tr><td>Альдегиды</td><td>1) Реакция серебряного зеркала<br>2) Cu(OH)₂ (свежепригот.)</td><td>1) Налёт серебра<br>2) Красный осадок</td></tr>
+                <tr><td>Глюкоза</td><td>Cu(OH)₂ + нагревание</td><td>Сначала васильковый цвет, затем — красный осадок</td></tr>
+                <tr><td>Крахмал</td><td>Раствор йода</td><td>Посинение раствора</td></tr>
+                <tr><td>Карбоновые кислоты</td><td>NaHCO₃ (сода) *</td><td>Выделение газа (CO₂)</td></tr>
+                <tr><td>Белки</td><td>1) Биуретовая р-ция (щёлочь + CuSO₄)<br>2) Ксантопротеиновая (+ конц. HNO₃)</td><td>1) Красно-фиолетовая окраска<br>2) Жёлтая окраска, свёртывание</td></tr>
+            </table>
+        </div>
         <p style="font-size: 11px; color: var(--text-light); margin-top: 15px; font-style: italic;"><i>* Для карбоновых кислот в исходной таблице указан только признак «Выделение газа». В симуляторе используется стандартный школьный реагент — NaHCO₃.</i></p>
     </div>
 </div>
@@ -464,8 +544,6 @@
                 msg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg> <b>Верно!</b> Карбоновая кислота реагирует с NaHCO₃ с выделением CO₂ (газ): R-COOH + NaHCO₃ → R-COONa + H₂O + CO₂↑. Альдегид не содержит кислотной группы — реакция не идёт.';
                 document.getElementById('p4a-liquid').style.backgroundColor = 'rgba(200, 230, 255, 0.5)';
                 document.getElementById('p4b-liquid').style.backgroundColor = 'rgba(200, 230, 255, 0.5)';
-                
-                // ИСПРАВЛЕНИЕ: Пузырьки добавляются только в пробирку с кислотой (Вещество А)
                 addBubblesToPair4();
             } else if (reagent === 'i2') {
                 outcome = 'incorrect';
@@ -520,10 +598,9 @@
         window.scrollTo({ top: document.getElementById('level1').offsetTop, behavior: 'smooth' });
     }
 
-    // ИСПРАВЛЕННЫЕ ФУНКЦИИ ДЛЯ ПАРЫ 4 (только Вещество А)
     function addBubblesToPair4() {
         removeBubblesFromPair4();
-        const liquid = document.getElementById('p4a-liquid'); // Только карбоновая кислота
+        const liquid = document.getElementById('p4a-liquid');
         for (let i = 0; i < 6; i++) {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
@@ -658,6 +735,17 @@
         if (event.target === modal) modal.style.display = 'none';
     }
 
+    // Функция для проверки и отображения градиентных подсказок прокрутки
+    function updateScrollHints() {
+        document.querySelectorAll('.table-wrapper').forEach(wrapper => {
+            if (wrapper.scrollWidth > wrapper.clientWidth) {
+                wrapper.classList.add('has-scroll');
+            } else {
+                wrapper.classList.remove('has-scroll');
+            }
+        });
+    }
+
     function restartAll() {
         currentPair = 1;
         for (let i = 1; i <= totalPairs; i++) {
@@ -689,9 +777,14 @@
         document.querySelectorAll('.level').forEach(el => el.classList.remove('active'));
         document.getElementById('level1').classList.add('active');
         window.scrollTo(0, 0);
+        setTimeout(updateScrollHints, 100);
     }
 
     updateProgress1();
+    
+    // Проверяем прокрутку при загрузке и изменении размера окна
+    window.addEventListener('load', updateScrollHints);
+    window.addEventListener('resize', updateScrollHints);
 </script>
 </body>
 </html>
